@@ -1,14 +1,8 @@
 //global
 w = 640;
 h = 480;
-lives = 3;
-waves = 0;
-waven = 0;
-waveo = new vec(0,0);
-wavev = 50;
 mx = 0;
 my = 0;
-keys = new Array();
 // canvas element
 C = document.getElementById('c');
 C.width = w;
@@ -44,11 +38,11 @@ function obj(p) {
     this.con = false;
     this.scale = new vec(1,1);
     this.color = '#fff';
-    this.speed = 10;
+    this.speed = 200;
     this.mov = function() {
         norm(this.dir);
-        x = this.pos.x + this.dir.x*this.speed;
-        y = this.pos.y + this.dir.y*this.speed;
+        x = this.pos.x + this.dir.x*this.speed/fps;
+        y = this.pos.y + this.dir.y*this.speed/fps;
         b = this.bound;
         this.pos.x = (this.con&&(x-b<0||x+b>w))?this.pos.x:x;
         this.pos.y = (this.con&&(y-b<0||y+b>h))?this.pos.y:y;
@@ -69,12 +63,14 @@ function user(p) {
 }
 function enemy(l) {
     obj.call(this, l);
-    this.speed = 7;
+    this.speed = 140;
+    this.unc = Math.random()*.5;
     this.upd = function() {
         this.dir = sub(player.pos,this.pos);
+        norm(this.dir);
+        this.dir.x += this.unc;
+        this.dir.y += this.unc;
         this.mov();
-        if (col(this, player)) 
-            hit();
     }
 }
 function shuttle(p) {
@@ -91,9 +87,11 @@ function shuttle(p) {
 }
 function shot() {
     obj.call(this, new vec(player.pos.x, player.pos.y));
-    this.speed=15;
+    this.speed=300;
     this.color='#0ff';
     this.dir = sub(new vec(mx,my), player.pos);
+    this.id = ++id;
+    shots[id] = this;
     this.verts = va(new Array(
         0,-8,
         4,0,
@@ -148,6 +146,7 @@ function draw(c,g) {
 }
 // game loop
 function loop() {
+    startt = new Date().getTime();
     // clear
     c.fillRect(0,0,w,h);
     // update player
@@ -163,16 +162,29 @@ function loop() {
     }
     player.mov();   
     // draw enemies
-    for (i=0;i<enemies.length;i++) {
+    for (i in enemies) {
         e = enemies[i];
         e.upd();
-        draw(c,e);
+        if (col(e, player)) 
+            return hit();
+        else
+            draw(c,e);
     }
     // draw player
     draw(c,player);
-    for (i=0;i<shots.length;i++) {
+    // shots
+    for (i in shots) {
         s = shots[i];
         s.mov();
+        for (k in enemies) {
+            e = enemies[k];
+            if (col(s,e)) {
+                delete enemies[k];
+                delete shots[i];
+                score++;
+                break;
+            }
+        }
         draw(c,s);
     }
     // shots
@@ -183,8 +195,10 @@ function loop() {
     draw(c,hp);
     c.strokeStyle='#0f0';
     c.strokeText("x"+lives, 25, 13);
+    c.strokeText("score "+score, 50, 13);
 
-    setTimeout(loop, 50);
+    fps = 1000/(new Date().getTime()-startt+33);
+    setTimeout(loop, 33);
 }
 function wp(k) {
     return k*w + (-1+k*2)*Math.random()*wavev;
@@ -205,24 +219,39 @@ function wave() {
     }
 }
 function shoot() {
-    log('asasd');
-    shots.push(new shot()); 
-    setTimeout(shoot, 250);
+    new shot(); 
+    setTimeout(shoot, 500);
 }
 function hit() {
     lives--;
-    if (lives < 0)
-        alert("over!");
+    if (lives < 0) {
+        alert("Game Over! score: " + score);
+        start();
+        return;
+    }
     init();
+    loop();
 }
 function init() {
     // objects
-    player = new user(new vec(100, 150));
+    player = new user(new vec(300, 200));
     enemies = new Array();
     shots = new Array();
-    shoot();
+    keys = new Array();
 }
-// player hit
+function start() {
+    lives = 3;
+    waves = 0;
+    waven = 0;
+    waveo = new vec(0,0);
+    wavev = 50;
+    fps = 1;
+    id = 0;
+    score = 0;
+    init();
+    loop();
+    wave();
+}
 
 // main
 
@@ -232,9 +261,9 @@ window.onkeydown = function(e) {
 window.onkeyup = function(e) {
     keys[e.keyCode] = false;
 }
-init();
-loop();
-wave();
+
+start();
+shoot();
 
 //TODO: remove this and all references
 function log(msg) {
