@@ -265,8 +265,4 @@ window.onkeyup = function(e) {
 start();
 shoot();
 
-//TODO: remove this and all references
-function log(msg) {
-    console.log(msg);
-}
 //http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html
