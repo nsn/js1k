@@ -1,7 +1,6 @@
 #!/bin/sh
-#echo -n "eval('"
-#/usr/bin/java -jar ../lib/yuicompressor-2.4.2.jar shmup.small.js \
-cat shmup.small.js \
+#cat shmup.small.js \
+/usr/bin/java -jar ../lib/yuicompressor-2.4.2.jar shmup.small.js \
 | sed -r 's/length\(/A\(/g' \
 | sed -r 's/norm\(/B\(/g' \
 | sed -r 's/mul\(/D\(/g' \
@@ -38,7 +37,5 @@ cat shmup.small.js \
 | sed -r 's/\.verts/\.K/g' \
 | sed -r 's/\.unc/\.L/g' \
 | sed -r 's/\.upd/\.M/g' \
-#sed -r 's/function /~/g' 
-#echo -n "'.replace(/~/g,\"function \")";
-#echo "');"
+| php compress.php
 
