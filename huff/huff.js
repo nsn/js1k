@@ -26,10 +26,10 @@ function node(left, right) {
         left.collect(tab,path+'1');
         right.collect(tab,path+'0');
     }
-    this.decode = function(cypher,cleartext) {
-        charAt = cypher.charAt(0);
-        cypher = cypher.substr(1);
-        return charAt=='1'?left.decode(cypher,cleartext):right.decode(cypher,cleartext);
+    this.decode = function() {
+        charAt = bitString.charAt(0);
+        bitString = bitString.substr(1);
+        charAt=='1'?left.decode():right.decode();
     }
 }
 function leaf(sym) {
@@ -37,8 +37,8 @@ function leaf(sym) {
     this.collect = function(tab, path) {
         tab[this.symbol] = path;
     }
-    this.decode = function(coded,clear) {
-        return clear + this.symbol;
+    this.decode = function() {
+        cleartext = cleartext + this.symbol;
     }
     this.inc = function () {
         this.freq++;
@@ -106,22 +106,14 @@ function encode(inputString) {
     //window.alert(outputString.length/8/inputString.length);
     return convertToBinary(outputString);
 }
-/*
-function invert(inArray) {
-    outArray = new Array();
-    for (key in inArray)
-        outArray[inArray[key]] = key;
-    return outArray;
-}
-*/
 function convertToString(binaryString) {
     bitString = '';
     for (counter=0;counter<binaryString.length;counter++) {
         binaryChar = binaryString.charCodeAt(counter);
-        //log("converting binary char: " + binaryChar);
+        log("converting binary char: " + binaryChar);
         currentMask = 128;
         for (numBit=0;numBit<8;numBit++) {
-            //log("mask " + currentMask + " char " + binaryChar + " " + binaryChar&currentMask);
+            log("mask " + currentMask + " char " + binaryChar);
             bitString = bitString + (binaryChar&currentMask?'1':'0'); 
             currentMask = currentMask >> 1;
         }
@@ -132,10 +124,10 @@ function decode(binaryString, freqTable) {
     bitString = convertToString(binaryString);
     log(bitString);
     huffmanTree = buildTree(freqTable);
-    orig = '';
+    cleartext = '';
     while (bitString.length>0)
-        huffmanTree.decode(bitString,orig);
-    log(orig);
+        huffmanTree.decode();
+    log(cleartext);
 }
 
 function log(msg) {
