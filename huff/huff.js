@@ -12,7 +12,12 @@ document.body.appendChild(submit);
 field.value = "name='world'; alert(\"hello, \" + name);";
 //field.value = "j'aime aller sur le bord de l'eau les jeudis ou les jours impairs";
 str = encode(field.value);
-src = decode(str, savedQueue);
+log("|" + str + "|");
+//src = decode(str, savedQueue, field.value.length);
+script = makeExecutable(str, savedQueue, field.value.length);
+log(script);
+eval(script);
+
 
 function tree(sym, freq) {
     this.freq = freq;
@@ -39,9 +44,6 @@ function leaf(sym) {
     }
     this.decode = function() {
         cleartext = cleartext + this.symbol;
-    }
-    this.inc = function () {
-        this.freq++;
     }
 }
 function sortNode(node1, node2) {
@@ -70,7 +72,6 @@ function convertToBinary(bitString) {
             appendByte();
         }
     }
-    appendByte();
     //log(binaryString);
     return binaryString;
 }
@@ -87,7 +88,7 @@ function encode(inputString) {
     for (counter=0;counter<inputString.length;counter++) {
         currentChar = inputString.charAt(counter);
         if (alphabet[currentChar])
-            alphabet[currentChar].inc();
+            alphabet[currentChar].freq++;
         else
             alphabet[currentChar] = new leaf(currentChar);
     }
@@ -106,6 +107,7 @@ function encode(inputString) {
     //window.alert(outputString.length/8/inputString.length);
     return convertToBinary(outputString);
 }
+
 function convertToString(binaryString) {
     bitString = '';
     for (counter=0;counter<binaryString.length;counter++) {
@@ -113,21 +115,34 @@ function convertToString(binaryString) {
         log("converting binary char: " + binaryChar);
         currentMask = 128;
         for (numBit=0;numBit<8;numBit++) {
-            log("mask " + currentMask + " char " + binaryChar);
+            //log("mask " + currentMask + " char " + binaryChar);
             bitString = bitString + (binaryChar&currentMask?'1':'0'); 
             currentMask = currentMask >> 1;
         }
     }
     return bitString;
 }
-function decode(binaryString, freqTable) {
+function decode(binaryString, freqTable, clearlength) {
     bitString = convertToString(binaryString);
     log(bitString);
     huffmanTree = buildTree(freqTable);
     cleartext = '';
-    while (bitString.length>0)
+    //while (bitString.length>0)
+    while (cleartext.length < clearlength)
         huffmanTree.decode();
     log(cleartext);
+}
+function makeExecutable(binaryString, freqTable, clearlength) {
+    executable = '';
+    executable = executable + "c='" + binaryString + "';t=[";
+    for (currentNode in freqTable) {
+        currentSymbol = freqTable[currentNode].symbol;
+        if (currentSymbol == '"' || currentSymbol == '\\')
+            currentSymbol = '\\' + currentSymbol;
+        executable = executable + '{"symbol":"' + currentSymbol + '","freq":' + freqTable[currentNode].freq + '},';
+    }
+    executable = executable + "];l=" + clearlength +";";
+    return executable;
 }
 
 function log(msg) {
