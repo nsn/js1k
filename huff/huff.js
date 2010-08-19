@@ -18,79 +18,16 @@ script = makeExecutable(str, savedQueue, field.value.length);
 log(script);
 eval(script);
 
-
-function tree(sym, freq) {
-    this.freq = freq;
-    this.symbol = sym;
-}
-function node(left, right) {
-    tree.call(this, left.symbol+right.symbol, left.freq+right.freq);
-    this.left = left;
-    this.right = right;
-    this.collect = function(tab, path) {
-        left.collect(tab,path+'1');
-        right.collect(tab,path+'0');
-    }
-    this.decode = function() {
-        charAt = bitString.charAt(0);
-        bitString = bitString.substr(1);
-        charAt=='1'?left.decode():right.decode();
-    }
-}
-function leaf(sym) {
-    tree.call(this, sym, 1);
-    this.collect = function(tab, path) {
-        tab[this.symbol] = path;
-    }
-    this.decode = function() {
-        cleartext = cleartext + this.symbol;
-    }
-}
-function sortNode(node1, node2) {
-    return node2.freq - node1.freq;
-}
-function appendByte() {
-    //log("byte done " + currentByte);
-    if (currentByte==92 || currentByte==39)
-        binaryString = binaryString + '\\';
-
-    binaryChar = String.fromCharCode(currentByte);
-    binaryString = binaryString+binaryChar;
-    currentByte = 0;
-}
-function convertToBinary(bitString) {
-    while (bitString.length%8!=0)
-        bitString = bitString + "0";
-    log(bitString);
-    binaryString = '';
-    currentByte = 0;
-    counter = 0;
-    while (counter<bitString.length) {
-        currentByte = currentByte << 1;
-        currentByte = currentByte | (bitString.charAt(counter) == '1');
-        if (++counter%8 == 0) {
-            appendByte();
-        }
-    }
-    //log(binaryString);
-    return binaryString;
-}
-function buildTree(frequencyNodes) {
-    while (frequencyNodes.length > 1) {
-        frequencyNodes.sort(sortNode);
-        frequencyNodes.push(new node(frequencyNodes.pop(), frequencyNodes.pop()));
-    }
-    return frequencyNodes[0];
-}
+function T(s,f){this.f=f;this.s=s;}function N(l,r){T.call(this,l.s+r.s,l.f+r.f);this.l=l;this.r=r;this.c=function(t,p){l.c(t,p+'1');r.c(t,p+'0');};this.d=function(){c=v.charAt(0);v=v.substr(1);c=='1'?l.d():r.d();}}function C(s){T.call(this,s,1);this.c=function(t,p){t[this.s]=p;};this.d=function(){C+=this.s;}}function A(z,y){return y.f-z.f;}function B(){if(x==92||x==39)w+='\\';t=String.fromCharCode(x);w+=t;x=0;}function D(v){while(v.length%8!=0)v+="0";w='';x=0;i = 0; while (i<v.length) {x=x<<1;x=x|(v.charAt(i)=='1');if(++i%8==0){B();}}return w;}function E(a){while(a.length>1){a.sort(A);a.push(new N(a.pop(),a.pop()));}return a[0];}
 function encode(inputString) {
     alphabet = new Array();
     // find frequencies
-    for (counter=0;counter<inputString.length;counter++) {
-        currentChar = inputString.charAt(counter);
+    for (i=0;i<inputString.length;i++) {
+        currentChar = inputString.charAt(i);
         if (alphabet[currentChar])
-            alphabet[currentChar].freq++;
+            alphabet[currentChar].f++;
         else
-            alphabet[currentChar] = new leaf(currentChar);
+            alphabet[currentChar] = new C(currentChar);
     }
     // build queue
     queue = new Array();
@@ -99,13 +36,13 @@ function encode(inputString) {
     }
     savedQueue = queue.slice(0);
     table = new Array();
-    buildTree(queue).collect(table, '');
+    E(queue).c(table, '');
     outputString = '';
-    for (counter=0;counter<inputString.length;counter++) {
-        outputString = outputString + table[inputString.charAt(counter)];
+    for (i=0;i<inputString.length;i++) {
+        outputString = outputString + table[inputString.charAt(i)];
     }
     //window.alert(outputString.length/8/inputString.length);
-    return convertToBinary(outputString);
+    return D(outputString);
 }
 
 function convertToString(binaryString) {
@@ -125,21 +62,21 @@ function convertToString(binaryString) {
 function decode(binaryString, freqTable, clearlength) {
     bitString = convertToString(binaryString);
     log(bitString);
-    huffmanTree = buildTree(freqTable);
-    cleartext = '';
+    huffmanTree = E(freqTable);
+    C = '';
     //while (bitString.length>0)
-    while (cleartext.length < clearlength)
+    while (C.length < clearlength)
         huffmanTree.decode();
-    log(cleartext);
+    log(C);
 }
 function makeExecutable(binaryString, freqTable, clearlength) {
     executable = '';
     executable = executable + "c='" + binaryString + "';t=[";
     for (currentNode in freqTable) {
-        currentSymbol = freqTable[currentNode].symbol;
+        currentSymbol = freqTable[currentNode].s;
         if (currentSymbol == '"' || currentSymbol == '\\')
             currentSymbol = '\\' + currentSymbol;
-        executable = executable + '{"symbol":"' + currentSymbol + '","freq":' + freqTable[currentNode].freq + '},';
+        executable = executable + '{"s":"' + currentSymbol + '","f":' + freqTable[currentNode].f + '},';
     }
     executable = executable + "];l=" + clearlength +";";
     return executable;
