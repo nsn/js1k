@@ -3,13 +3,44 @@ w = 640;
 h = 480;
 mx = 0;
 my = 0;
+cposx = cposy = 0;
 // canvas element
 C = document.getElementById('c');
 C.width = w;
 C.height = h;
+function position(n) {
+    try{
+        cposx=n.x;
+        cposy=n.y;
+    } catch(e) {}
+    if ((!cposx) || (!xposy)) {
+        try {
+            cposx=0; cposy=0;
+            while(n) {
+                cposx += n.offsetLeft;
+                cposy += n.offsetTop;
+                n = n.offsetParent;
+            }
+        } catch(e) {}
+    }
+}
+position(C); 
 C.addEventListener('mousemove', function(e) {
-    mx = e.clientX;
-    my = e.clientY;
+    if (!e) var e = window.event;   
+
+    if (e.pageX || e.pageY)     {
+        mx = e.pageX;
+        my = e.pageY;
+    }
+    else if (e.clientX || e.clientY)    {
+        mx = e.clientX + document.body.scrollLeft
+            + document.documentElement.scrollLeft;
+        my = e.clientY + document.body.scrollTop
+            + document.documentElement.scrollTop;
+    }
+
+    mx -= cposx;
+    my -= cposy;
 }, false);
 // context
 c = C.getContext('2d');
@@ -83,19 +114,6 @@ function shuttle(p) {
         8,-4,
         4,4,
         0,8
-    ));
-}
-function shot() {
-    obj.call(this, new vec(player.pos.x, player.pos.y));
-    this.speed=300;
-    this.color='#0ff';
-    this.dir = sub(new vec(mx,my), player.pos);
-    this.id = ++id;
-    shots[id] = this;
-    this.verts = va(new Array(
-        0,-8,
-        4,0,
-        0,4
     ));
 }
 // helpers
@@ -182,6 +200,9 @@ function loop() {
                 delete enemies[k];
                 delete shots[i];
                 score++;
+                //if (score >= 33*powerup*powerup*Math.sqrt(powerup+1)+25)
+                if (score >= 33*powerup*powerup+20)
+                    powerup++;
                 break;
             }
         }
@@ -203,23 +224,43 @@ function loop() {
 function wp(k) {
     return k*w + (-1+k*2)*Math.random()*wavev;
 }
-function wave() {
-    if (waven<=waves) {
-        x = wp(waveo.x);
-        y = wp(waveo.y);
-        enemies.push(new shuttle(new vec(wp(waveo.x), wp(waveo.y))));
-        waven++;
-        setTimeout(wave,200);    
-    } else {
-        waven = 0;
-        waveo.x = Math.random()>.5?1:0;
-        waveo.y = Math.random()>.5?1:0;
-        waves+=2;
-        setTimeout(wave,3000);    
+function spawn(x,y) {
+    return (function() {
+        enemies.push(new shuttle(new vec(wp(x), wp(y))));
+    });
+}
+function wave(waven) {
+    waveo = new vec(Math.random()>.5?1:0, Math.random()>.5?1:0);
+    for (var z=0;z<waven;z++) {
+        var functref = spawn(waveo.x, waveo.y);
+        setTimeout(functref, 150*z);
     }
 }
+function startwaves() {
+    new wave(waves);
+    waves++;
+    setTimeout(startwaves,3000);
+}
+function shot(n) {
+    obj.call(this, new vec(player.pos.x, player.pos.y));
+    this.speed=300;
+    this.color='#0ff';
+    a = Math.ceil(n*.5)*(n%2==0?1:-1)*.1;
+    this.dir = sub(new vec(mx,my), player.pos);
+    this.dir.x = this.dir.x*Math.cos(a) - Math.sin(a)*this.dir.y;
+    this.dir.y = this.dir.y*Math.cos(a) + Math.sin(a)*this.dir.x;
+    this.id = ++id;
+    shots[id] = this;
+    this.verts = va(new Array(
+        0,-8,
+        4,0,
+        0,4
+    ));
+}
 function shoot() {
-    new shot(); 
+    for (q=0;q<=powerup;q++) {
+        new shot(q);
+    }
     setTimeout(shoot, 500);
 }
 function hit() {
@@ -241,16 +282,15 @@ function init() {
 }
 function start() {
     lives = 3;
-    waves = 0;
-    waven = 0;
-    waveo = new vec(0,0);
+    powerup = 0;
+    waves = 1;
     wavev = 50;
     fps = 1;
     id = 0;
-    score = 0;
+    score = tscore = 0;
     init();
     loop();
-    wave();
+    startwaves();
 }
 
 // main
