@@ -4,6 +4,7 @@ h = 480;
 mx = 0;
 my = 0;
 cposx = cposy = 0;
+gameid = 0;
 // canvas element
 C = document.getElementById('c');
 C.width = w;
@@ -224,22 +225,30 @@ function loop() {
 function wp(k) {
     return k*w + (-1+k*2)*Math.random()*wavev;
 }
-function spawn(x,y) {
+function spawn(x,y,id) {
     return (function() {
-        enemies.push(new shuttle(new vec(wp(x), wp(y))));
+        console.log("fnark " + gameid + " id " + id);
+        if (gameid == id)
+            enemies.push(new shuttle(new vec(wp(x), wp(y))));
     });
 }
-function wave(waven) {
+function wave(waven, gid) {
+    console.log("wave: " + gid);
     waveo = new vec(Math.random()>.5?1:0, Math.random()>.5?1:0);
     for (var z=0;z<waven;z++) {
-        var functref = spawn(waveo.x, waveo.y);
+        var functref = spawn(waveo.x, waveo.y, gid);
         setTimeout(functref, 150*z);
     }
 }
-function startwaves() {
-    new wave(waves);
-    waves++;
-    setTimeout(startwaves,3000);
+function startwaves(gid) {
+    console.log("ficken " + waves);
+    return (function () {
+        if (gid == gameid) {
+            new wave(waves, gid);
+            waves++;
+            setTimeout(startwaves(gid),2500+waves*75);
+        }
+    });
 }
 function shot(n) {
     obj.call(this, new vec(player.pos.x, player.pos.y));
@@ -285,12 +294,13 @@ function start() {
     powerup = 0;
     waves = 1;
     wavev = 50;
+    gameid++;
     fps = 1;
     id = 0;
-    score = tscore = 0;
+    score = 0;
     init();
     loop();
-    startwaves();
+    startwaves(gameid)();
 }
 
 // main
