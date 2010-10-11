@@ -227,13 +227,11 @@ function wp(k) {
 }
 function spawn(x,y,id) {
     return (function() {
-        console.log("fnark " + gameid + " id " + id);
         if (gameid == id)
             enemies.push(new shuttle(new vec(wp(x), wp(y))));
     });
 }
 function wave(waven, gid) {
-    console.log("wave: " + gid);
     waveo = new vec(Math.random()>.5?1:0, Math.random()>.5?1:0);
     for (var z=0;z<waven;z++) {
         var functref = spawn(waveo.x, waveo.y, gid);
@@ -241,7 +239,6 @@ function wave(waven, gid) {
     }
 }
 function startwaves(gid) {
-    console.log("ficken " + waves);
     return (function () {
         if (gid == gameid) {
             new wave(waves, gid);
